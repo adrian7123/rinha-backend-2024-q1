@@ -1,0 +1,16 @@
+version: "3.1"
+
+services:
+  db:
+    image: mariadb:latest
+    container_name: rinha-database
+    restart: always
+    environment:
+      MARIADB_USER: rinha
+      MARIADB_PASSWORD: rinha
+      MARIADB_ROOT_PASSWORD: rinha
+    volumes:
+      - "./mariadb-data/data:/var/lib/mysql/data/"
+      - "./mariadb-data/logs:/var/lib/mysql/logs/"
+    ports:
+      - 3306:3306
