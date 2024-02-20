@@ -12,7 +12,12 @@ struct RocketContext {
 
 type Ctx = State<RocketContext>;
 
+#[get("/")]
+pub fn hello() -> &'static str {
+    "Olá, Mundo!"
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
+    rocket::build().mount("/", routes![hello])
 }
