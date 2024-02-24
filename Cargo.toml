@@ -12,7 +12,7 @@ resolver = "2"
 db = { path = "./prisma" }
 
 rocket = { version = "=0.5.0", features = ["json"] }
-chrono = "0.4.31"
+chrono = { version = "0.4.31", features = ["serde"] }
 serde = "1.0.188"
 serde_json = "1.0.107"
 tokio = "1.32.0"
