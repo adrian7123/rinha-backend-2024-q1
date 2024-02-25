@@ -1,3 +1,4 @@
+use chrono::Utc;
 use rocket::{http::Status, serde::json::Json, Route};
 use serde_json::json;
 
@@ -43,6 +44,7 @@ async fn customer_extract(ctx: &Ctx, id: u8) -> ApiResult {
                 {
                     "saldo": {
                         "total": customer.balance,
+                        "data_extrato": Utc::now(),
                         "limite": customer.limit
                     },
                     "ultimas_transacoes": customer.transactions,

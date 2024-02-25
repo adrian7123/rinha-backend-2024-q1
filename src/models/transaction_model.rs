@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub enum TransactionType {
-    #[serde(rename(deserialize = "c"))]
+    #[serde(rename = "c")]
     Credit,
-    #[serde(rename(deserialize = "d"))]
+    #[serde(rename = "d")]
     Debit,
 }
 
@@ -27,12 +27,12 @@ impl TryFrom<String> for Description {
 
 #[derive(Serialize, Deserialize)]
 pub struct Transaction {
-    #[serde(rename(deserialize = "valor"))]
+    #[serde(rename = "valor")]
     pub value: i64,
-    #[serde(rename(deserialize = "tipo"))]
+    #[serde(rename = "tipo")]
     pub transaction_type: TransactionType,
-    #[serde(rename(deserialize = "descricao"))]
+    #[serde(rename = "descricao")]
     pub description: Description,
-    #[serde(rename(deserialize = "realizada_em"), default = "Utc::now")]
+    #[serde(rename = "realizada_em", default = "Utc::now")]
     pub created_at: DateTime<Utc>,
 }

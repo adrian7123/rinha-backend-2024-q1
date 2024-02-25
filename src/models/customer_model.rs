@@ -28,7 +28,7 @@ impl<T> RingBuffer<T> {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Customer {
     pub balance: i64,
     pub limit: i64,
@@ -40,7 +40,7 @@ impl Customer {
         Self {
             balance: 0,
             limit,
-            transactions: RingBuffer::default(),
+            transactions: RingBuffer::with_capacity(10),
         }
     }
 
@@ -52,7 +52,7 @@ impl Customer {
                 Ok(())
             }
             TransactionType::Debit => {
-                if (self.balance + transaction.value).abs() > self.limit {
+                if self.balance + self.limit >= transaction.value {
                     self.balance -= transaction.value;
                     self.transactions.push(transaction);
                     Ok(())
