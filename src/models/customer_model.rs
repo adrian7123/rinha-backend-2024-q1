@@ -18,6 +18,7 @@ impl<T> RingBuffer<T> {
         Self(VecDeque::with_capacity(capacity))
     }
 
+    #[allow(dead_code)]
     pub fn push(&mut self, item: T) {
         if self.0.len() >= self.0.capacity() {
             self.0.pop_back();
@@ -27,35 +28,41 @@ impl<T> RingBuffer<T> {
         }
     }
 }
+fn default() -> i32 {
+    0
+}
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct Customer {
-    pub balance: i64,
-    pub limit: i64,
-    pub transactions: RingBuffer<Transaction>,
+    #[serde(default = "default")]
+    pub id: i32,
+    pub balance: i32,
+    pub limit: i32,
+    pub transactions: Vec<Transaction>,
 }
 
 impl Customer {
-    pub fn new(limit: i64) -> Self {
-        Self {
-            balance: 0,
-            limit,
-            transactions: RingBuffer::with_capacity(10),
-        }
-    }
-
-    pub fn transact(&mut self, transaction: Transaction) -> Result<(), String> {
+    pub fn transact(&self, transaction: Transaction) -> Result<Self, String> {
+        let mut transactions = self.transactions.clone();
         match transaction.transaction_type {
             TransactionType::Credit => {
-                self.balance += transaction.value;
-                self.transactions.push(transaction);
-                Ok(())
+                transactions.push(transaction.clone());
+                Ok(Self {
+                    id: self.id,
+                    limit: self.limit,
+                    balance: self.balance + transaction.value,
+                    transactions,
+                })
             }
             TransactionType::Debit => {
                 if self.balance + self.limit >= transaction.value {
-                    self.balance -= transaction.value;
-                    self.transactions.push(transaction);
-                    Ok(())
+                    transactions.push(transaction.clone());
+                    Ok(Self {
+                        id: self.id,
+                        limit: self.limit,
+                        balance: self.balance - transaction.value,
+                        transactions,
+                    })
                 } else {
                     Err(String::from("Não tem limite suficiente"))
                 }

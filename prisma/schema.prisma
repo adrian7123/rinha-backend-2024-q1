@@ -8,8 +8,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Costumer {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+model Customer {
+  id           Int           @id @default(autoincrement())
+  balance      Int
+  limit        Int
+  transactions Transaction[]
+}
+
+enum TransactionType {
+  Credit
+  Debit
+}
+
+model Transaction {
+  id               Int             @id @default(autoincrement())
+  value            Int
+  transaction_type TransactionType
+  description      String
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+
+  customer    Customer @relation(fields: [customer_id], references: [id])
+  customer_id Int
 }

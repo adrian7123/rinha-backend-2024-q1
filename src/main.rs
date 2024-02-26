@@ -1,19 +1,19 @@
 mod controllers;
 mod models;
+mod repository;
 mod shared;
 
 #[macro_use]
 extern crate rocket;
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use controllers::customer_controller;
-use models::customer_model::Customer;
-use rocket::{futures::lock::Mutex, State};
+use db::PrismaClient;
+use rocket::State;
 
 struct RocketContext {
-    // pub db: Arc<PrismaClient>,
-    pub customers: Arc<Mutex<HashMap<u8, Customer>>>,
+    pub db: Arc<PrismaClient>,
 }
 
 type Ctx = State<RocketContext>;
@@ -24,20 +24,32 @@ type Ctx = State<RocketContext>;
 // 3    1000000    0
 // 4    10000000   0
 // 5    500000     0
+async fn initialize_db(db: &Arc<PrismaClient>) {
+    let _ = db.customer().delete_many(vec![]).exec().await;
+    let _ = db.transaction().delete_many(vec![]).exec().await;
+
+    let data: Vec<(i32, i32, Vec<db::customer::SetParam>)> = vec![
+        (0, 100_000, vec![db::customer::id::set(1)]),
+        (0, 80_000, vec![db::customer::id::set(2)]),
+        (0, 1_000_000, vec![db::customer::id::set(3)]),
+        (0, 10_000_000, vec![db::customer::id::set(4)]),
+        (0, 5_00_000, vec![db::customer::id::set(5)]),
+    ];
+
+    let _ = db.customer().create_many(data).exec().await;
+}
 
 #[launch]
 async fn rocket() -> _ {
-    let _customers: HashMap<u8, Customer> = HashMap::from_iter([
-        (1, Customer::new(100_000)),
-        (2, Customer::new(80_000)),
-        (3, Customer::new(1_000_000)),
-        (4, Customer::new(10_000_000)),
-        (5, Customer::new(500_000)),
-    ]);
+    let db = Arc::new(
+        db::new_client()
+            .await
+            .expect("Failed to create Prisma client"),
+    );
 
-    let customers = Arc::new(Mutex::new(_customers));
+    initialize_db(&db).await;
 
     rocket::build()
         .mount("/clientes", customer_controller::routes())
-        .manage(RocketContext { customers })
+        .manage(RocketContext { db })
 }

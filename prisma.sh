@@ -1,6 +1,6 @@
 #!bin/bash
 
-cargo run -p prisma-cli --release $1
+cargo run -p prisma-cli --release $@
 
 file="./prisma/src/lib.rs"
 
