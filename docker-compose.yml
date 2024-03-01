@@ -4,8 +4,7 @@ services:
   api01: &api
     # Lembre-se de que seu serviço HTTP deve estar hospedado num repositório
     # publicamente acessível! Ex.: hub.docker.com
-    build:
-      context: .
+    image: adrianbueno/rinha-2024-q1
     hostname: api01
     environment:
       - MONGODB_URI=mongodb://mongodb:27017
@@ -17,8 +16,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
-          memory: "400MB"
+          cpus: "0.5"
+          memory: "150MB"
 
   api02:
     # Essa sintaxe reusa o que foi declarado em 'api01'.
@@ -52,6 +51,11 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "150MB"
 
 # O uso do modo `bridge` deve ser adequado à carga que será usada no teste.
 # A edição anterior se beneficiou do modo host pois o volume de requisições
