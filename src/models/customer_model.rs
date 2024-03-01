@@ -18,7 +18,6 @@ impl<T> RingBuffer<T> {
         Self(VecDeque::with_capacity(capacity))
     }
 
-    #[allow(dead_code)]
     pub fn push(&mut self, item: T) {
         if self.0.len() >= self.0.capacity() {
             self.0.pop_back();
