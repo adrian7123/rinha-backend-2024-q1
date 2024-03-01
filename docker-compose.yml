@@ -8,27 +8,22 @@ services:
       context: .
     hostname: api01
     environment:
-      - DATABASE_URL=mysql://root:rinha@127.0.0.1:3306/rinha
-
+      - MONGODB_URI=mongodb://mongodb:27017
+    depends_on:
+      - mongodb
     # Não é necessário expor qualquer porta além da porta do load balancer,
     # mas é comum as pessoas o fazerem para testarem suas APIs e conectarem
     # ao banco de dados na fase de desenvolvimento.
-    # depends_on:
-    #   - db
     deploy:
       resources:
         limits:
-          cpus: "0.6"
-          memory: "200MB"
+          cpus: "1"
+          memory: "400MB"
+
   api02:
     # Essa sintaxe reusa o que foi declarado em 'api01'.
     <<: *api
     hostname: api02
-    environment:
-      - DATABASE_URL=mysql://root:rinha@127.0.0.1:3306/rinha
-      - ROCKET_ENV=staging
-    ports:
-      - 8000:8000
 
   nginx:
     image: nginx:latest
@@ -46,28 +41,17 @@ services:
           cpus: "0.17"
           memory: "10MB"
 
-  db:
-    image: mariadb:latest
-    hostname: db
+  mongodb:
+    hostname: mongodb
+    image: mongo
+    container_name: mongodb
     restart: always
-    environment:
-      MARIADB_USER: rinha
-      MARIADB_PASSWORD: rinha
-      MARIADB_ROOT_PASSWORD: rinha
-    volumes:
-      - "./mariadb-data/data:/var/lib/mysql/data/"
-      - "./mariadb-data/logs:/var/lib/mysql/logs/"
-    ports:
-      - 3306:3306
-    deploy:
-      resources:
-        limits:
-          # Note que a soma de todos os limites dos serviços
-          # aqui declarados é de 1.5 unidades de CPU e 550MB
-          # de memória. A distribuição feita aqui é apenas
-          # um exemplo – distribua como quiser.
-          cpus: "0.13"
-          memory: "140MB"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongodb:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
 # O uso do modo `bridge` deve ser adequado à carga que será usada no teste.
 # A edição anterior se beneficiou do modo host pois o volume de requisições

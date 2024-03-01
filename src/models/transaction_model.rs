@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum TransactionType {
     #[serde(rename = "c")]
     Credit,
@@ -9,7 +9,7 @@ pub enum TransactionType {
     Debit,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(try_from = "String")]
 pub struct Description(pub String);
 
@@ -25,14 +25,8 @@ impl TryFrom<String> for Description {
     }
 }
 
-fn default() -> i32 {
-    0
-}
-
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Transaction {
-    #[serde(default = "default")]
-    pub id: i32,
     #[serde(rename = "valor")]
     pub value: i32,
     #[serde(rename = "tipo")]

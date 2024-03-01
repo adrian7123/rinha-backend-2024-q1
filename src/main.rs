@@ -6,15 +6,22 @@ mod shared;
 #[macro_use]
 extern crate rocket;
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use controllers::customer_controller;
-use db::PrismaClient;
+use dotenv::dotenv;
+use models::customer_model::Customer;
+use mongodb::{
+    options::{ClientOptions, ResolverConfig},
+    Client,
+};
 use rocket::State;
 
 struct RocketContext {
-    pub db: Arc<PrismaClient>,
+    pub db: DBClient,
 }
+
+pub type DBClient = Arc<Client>;
 
 type Ctx = State<RocketContext>;
 
@@ -24,30 +31,71 @@ type Ctx = State<RocketContext>;
 // 3    1000000    0
 // 4    10000000   0
 // 5    500000     0
-async fn initialize_db(db: &Arc<PrismaClient>) {
-    let _ = db.customer().delete_many(vec![]).exec().await;
-    let _ = db.transaction().delete_many(vec![]).exec().await;
 
-    let data: Vec<(i32, i32, Vec<db::customer::SetParam>)> = vec![
-        (0, 100_000, vec![db::customer::id::set(1)]),
-        (0, 80_000, vec![db::customer::id::set(2)]),
-        (0, 1_000_000, vec![db::customer::id::set(3)]),
-        (0, 10_000_000, vec![db::customer::id::set(4)]),
-        (0, 5_00_000, vec![db::customer::id::set(5)]),
+async fn initialize_db(db: &DBClient) -> Result<(), Box<dyn std::error::Error>> {
+    db.database("rinha").drop(None).await?;
+
+    let customers = vec![
+        Customer {
+            id: 1,
+            limit: 100_000,
+            ..Customer::default()
+        },
+        Customer {
+            id: 2,
+            limit: 80_000,
+            ..Customer::default()
+        },
+        Customer {
+            id: 3,
+            limit: 1_000_000,
+            ..Customer::default()
+        },
+        Customer {
+            id: 4,
+            limit: 10_000_000,
+            ..Customer::default()
+        },
+        Customer {
+            id: 5,
+            limit: 500_000,
+            // transactions: vec![Transaction {
+            //     created_at: Utc::now(),
+            //     description: Description("asd".to_string()),
+            //     transaction_type: TransactionType::Credit,
+            //     value: 1,
+            // }],
+            ..Customer::default()
+        },
     ];
 
-    let _ = db.customer().create_many(data).exec().await;
+    for customer in customers {
+        db.database("rinha")
+            .collection::<Customer>("customers")
+            .insert_one(customer, None)
+            .await?;
+    }
+
+    Ok(())
 }
 
 #[launch]
 async fn rocket() -> _ {
-    let db = Arc::new(
-        db::new_client()
-            .await
-            .expect("Failed to create Prisma client"),
-    );
+    dotenv().ok();
 
-    initialize_db(&db).await;
+    let client_uri =
+        env::var("MONGODB_URI").expect("You must set the MONGODB_URI environment var!");
+
+    let options =
+        ClientOptions::parse_with_resolver_config(&client_uri, ResolverConfig::cloudflare())
+            .await
+            .expect("ClientOptions error!");
+
+    let client = Client::with_options(options).expect("Client::with_options error!");
+
+    let db = Arc::new(client);
+
+    initialize_db(&db).await.expect("Error initialize_db");
 
     rocket::build()
         .mount("/clientes", customer_controller::routes())

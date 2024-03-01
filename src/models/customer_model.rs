@@ -1,10 +1,10 @@
 use std::collections::VecDeque;
 
+use super::transaction_model::Transaction;
+use mongodb::bson::{oid::ObjectId, Document};
 use serde::{Deserialize, Serialize};
 
-use super::transaction_model::{Transaction, TransactionType};
-
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RingBuffer<T>(VecDeque<T>);
 
 impl<T> Default for RingBuffer<T> {
@@ -28,45 +28,33 @@ impl<T> RingBuffer<T> {
         }
     }
 }
-fn default() -> i32 {
-    0
-}
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Customer {
-    #[serde(default = "default")]
+    pub _id: Option<ObjectId>,
     pub id: i32,
     pub balance: i32,
     pub limit: i32,
-    pub transactions: Vec<Transaction>,
+    pub transactions: RingBuffer<Transaction>,
+}
+
+impl Default for Customer {
+    fn default() -> Self {
+        Self {
+            id: 0,
+            _id: Some(ObjectId::new()),
+            balance: 0,
+            limit: 0,
+            transactions: RingBuffer::with_capacity(10),
+        }
+    }
 }
 
 impl Customer {
-    pub fn transact(&self, transaction: Transaction) -> Result<Self, String> {
-        let mut transactions = self.transactions.clone();
-        match transaction.transaction_type {
-            TransactionType::Credit => {
-                transactions.push(transaction.clone());
-                Ok(Self {
-                    id: self.id,
-                    limit: self.limit,
-                    balance: self.balance + transaction.value,
-                    transactions,
-                })
-            }
-            TransactionType::Debit => {
-                if self.balance + self.limit >= transaction.value {
-                    transactions.push(transaction.clone());
-                    Ok(Self {
-                        id: self.id,
-                        limit: self.limit,
-                        balance: self.balance - transaction.value,
-                        transactions,
-                    })
-                } else {
-                    Err(String::from("Não tem limite suficiente"))
-                }
-            }
-        }
+    pub fn to_document(&self) -> Result<Document, Box<dyn std::error::Error>> {
+        let serialized_customer = bson::to_bson(&self)?;
+        let document = serialized_customer.as_document().unwrap();
+
+        Ok(document.clone())
     }
 }
