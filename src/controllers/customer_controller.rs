@@ -21,7 +21,7 @@ async fn customer_create_transaction(
 ) -> ApiResult {
     let repo = CustomerRepository::new(&ctx.db);
 
-    let customer = repo.get_one(id).await?;
+    let customer = repo.get_one(&id).await?;
 
     if customer.is_none() {
         return Ok(ApiResponse::Error((
@@ -52,7 +52,7 @@ async fn customer_create_transaction(
         }
     }
 
-    repo.update(customer.id.clone(), customer.clone()).await?;
+    repo.update(&customer.id, &customer).await?;
 
     Ok(ApiResponse::Success(
         json!({
@@ -67,7 +67,7 @@ async fn customer_create_transaction(
 async fn customer_extract(ctx: &Ctx, id: i32) -> ApiResult {
     let repo = CustomerRepository::new(&ctx.db);
 
-    let customer = repo.get_one(id).await?;
+    let customer = repo.get_one(&id).await?;
 
     if customer.is_none() {
         return Ok(ApiResponse::Error((

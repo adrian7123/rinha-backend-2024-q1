@@ -1,6 +1,6 @@
 use mongodb::{bson::doc, Collection};
 
-use crate::{models::customer_model::Customer, DBClient};
+use crate::{models::customer_model::Customer, shared::utils::ToDocument, DBClient};
 
 pub struct CustomerRepository {
     collection: Collection<Customer>,
@@ -13,7 +13,7 @@ impl CustomerRepository {
         }
     }
 
-    pub async fn get_one(&self, id: i32) -> Result<Option<Customer>, Box<dyn std::error::Error>> {
+    pub async fn get_one(&self, id: &i32) -> Result<Option<Customer>, Box<dyn std::error::Error>> {
         let customer = self
             .collection
             .find_one(
@@ -29,8 +29,8 @@ impl CustomerRepository {
 
     pub async fn update(
         &self,
-        id: i32,
-        new_customer: Customer,
+        id: &i32,
+        new_customer: &Customer,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.collection
             .update_one(

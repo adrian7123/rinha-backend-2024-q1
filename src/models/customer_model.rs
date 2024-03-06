@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 
+use crate::shared::utils::ToDocument;
+
 use super::transaction_model::Transaction;
-use mongodb::bson::{oid::ObjectId, Document};
+use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -49,11 +51,4 @@ impl Default for Customer {
     }
 }
 
-impl Customer {
-    pub fn to_document(&self) -> Result<Document, Box<dyn std::error::Error>> {
-        let serialized_customer = bson::to_bson(&self)?;
-        let document = serialized_customer.as_document().unwrap();
-
-        Ok(document.clone())
-    }
-}
+impl ToDocument for Customer {}

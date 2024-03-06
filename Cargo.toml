@@ -21,3 +21,5 @@ bcrypt = "0.15.0"
 uuid = "1.4.1"
 mongodb = "2.8.1"
 bson = { version = "2.9.0", features = ["chrono-0_4"] }
+syn = "2.0.52"
+quote = "1.0.35"
